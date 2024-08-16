@@ -13,7 +13,7 @@ namespace CoreRCON.Tests;
 
 public class MincraftServerFixture : IAsyncLifetime
 {
-    
+
     public string RconPassword;
     public IPEndPoint RconEndpoint;
     public IPEndPoint QueryEndpoint;

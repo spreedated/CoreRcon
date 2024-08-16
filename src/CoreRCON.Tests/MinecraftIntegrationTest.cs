@@ -3,20 +3,19 @@
 */
 using System.Threading.Tasks;
 using CoreRCON.PacketFormats;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace CoreRCON.Tests;
 
-[Trait("Type", "Integration")]  
+[Trait("Type", "Integration")]
 public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITestOutputHelper output) : IClassFixture<MincraftServerFixture>
 {
     [Fact]
     public async Task TestConnectShouldConnectAndAuthenticate()
     {
-        using var logger = output.BuildLoggerFor<RCON>();
-        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+        using var logger = output.BuildLoggerFor<Rcon>();
+        using Rcon rcon = new Rcon(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
 
         await rcon.ConnectAsync();
 
@@ -27,8 +26,8 @@ public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITest
     [Fact]
     public async Task TestInvalidCommandShouldEchoBack()
     {
-        using var logger = output.BuildLoggerFor<RCON>();
-        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+        using var logger = output.BuildLoggerFor<Rcon>();
+        using Rcon rcon = new Rcon(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
 
         await rcon.ConnectAsync();
 
@@ -40,8 +39,8 @@ public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITest
     [Fact]
     public async Task TestConcurrentRequests()
     {
-        using var logger = output.BuildLoggerFor<RCON>();
-        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+        using var logger = output.BuildLoggerFor<Rcon>();
+        using Rcon rcon = new Rcon(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
 
         await rcon.ConnectAsync();
 
@@ -57,8 +56,8 @@ public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITest
     [Fact]
     public async Task TestListCommandShouldReturn()
     {
-        using var logger = output.BuildLoggerFor<RCON>();
-        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+        using var logger = output.BuildLoggerFor<Rcon>();
+        using Rcon rcon = new Rcon(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
 
         await rcon.ConnectAsync();
 
@@ -70,7 +69,7 @@ public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITest
     [Fact]
     public async Task TestInfoQueryShouldReturn()
     {
-        MinecraftQueryInfo serverInfo = (MinecraftQueryInfo) await ServerQuery
+        MinecraftQueryInfo serverInfo = (MinecraftQueryInfo)await ServerQuery
             .Info(serverFixture.QueryEndpoint, ServerQuery.ServerType.Minecraft);
 
         Assert.Equal("MINECRAFT", serverInfo.GameId);

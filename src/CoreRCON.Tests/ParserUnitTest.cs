@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CoreRCON.Parsers.Csgo;
+﻿using CoreRCON.Parsers.Csgo;
 using CoreRCON.Parsers.Standard;
 using Xunit;
 

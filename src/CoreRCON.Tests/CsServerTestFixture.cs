@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Xunit;
-using Polly;
-using System.Net;
-using Polly.Retry;
-using Microsoft.Extensions.Configuration;
-using System.Text;
-using System.Net.Http.Json;
-using Xunit.Abstractions;
-using Neovolve.Logging.Xunit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Neovolve.Logging.Xunit;
+using Polly;
+using Polly.Retry;
+using Xunit;
+using Xunit.Abstractions;
 
 
 namespace CoreRCON.Tests;
@@ -32,7 +30,7 @@ public class CsServerFixture : IAsyncLifetime
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddUserSecrets<CsServerFixture>()
-            .AddEnvironmentVariables(prefix:"APPSECRETS_")            
+            .AddEnvironmentVariables(prefix: "APPSECRETS_")
             .Build();
         _client = new HttpClient
         {
@@ -73,10 +71,10 @@ public class CsServerFixture : IAsyncLifetime
         stopResponse.EnsureSuccessStatusCode();
     }
 
-    internal RCON GetRconClient(ITestOutputHelper output = null)
+    internal Rcon GetRconClient(ITestOutputHelper output = null)
     {
-        ICacheLogger<RCON> rconLogger = output?.BuildLoggerFor<RCON>();
-        return new RCON(_rconEndpoint, _rconPassword, logger: rconLogger);
+        ICacheLogger<Rcon> rconLogger = output?.BuildLoggerFor<Rcon>();
+        return new Rcon(_rconEndpoint, _rconPassword, logger: rconLogger);
     }
 
     internal async Task StartServer()

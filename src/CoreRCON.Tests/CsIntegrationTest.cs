@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading.Tasks;
-using CoreRCON;
 using CoreRCON.PacketFormats;
-using Docker.DotNet.Models;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
-using Neovolve.Logging.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,13 +9,13 @@ using Xunit.Abstractions;
 namespace CoreRCON.Tests
 {
 
-    [Trait("Type","Integration")]
+    [Trait("Type", "Integration")]
     public class CsIntegrationTest(CsServerFixture serverFixture, ITestOutputHelper output) : IClassFixture<CsServerFixture>
     {
         [Fact]
         public async Task ConnectShouldConnectAndAuthenticate()
         {
-            using RCON rcon = serverFixture.GetRconClient();
+            using Rcon rcon = serverFixture.GetRconClient();
             await rcon.ConnectAsync();
 
             Assert.True(rcon.Connected);
@@ -36,7 +26,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task EchoCommandShouldReturnInputedText()
         {
-            using RCON rconClient = serverFixture.GetRconClient();
+            using Rcon rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             string response = await rconClient.SendCommandAsync("echo hi");
@@ -48,7 +38,7 @@ namespace CoreRCON.Tests
         {
             //Warning ! This test can ban your ip in the server if sv_rcon_maxfailure is set to 0
             //Use removeip to unban your ip (Default ban period is 60 min)
-            RCON rconClient = new (serverFixture._rconEndpoint, "wrong PW");
+            Rcon rconClient = new(serverFixture._rconEndpoint, "wrong PW");
             await Assert.ThrowsAsync<AuthenticationException>(rconClient.ConnectAsync);
             Assert.True(rconClient.Connected);
             Assert.False(rconClient.Authenticated);
@@ -57,7 +47,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task TestCommentShouldReturnEmptyResponse()
         {
-            using RCON rconClient = serverFixture.GetRconClient();
+            using Rcon rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             string response = await rconClient.SendCommandAsync("//comment");
@@ -67,7 +57,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task TestCvarListShouldReturnWholeResponse()
         {
-            using RCON rconClient = serverFixture.GetRconClient();
+            using Rcon rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             string response = await rconClient.SendCommandAsync("cvarlist");
@@ -78,7 +68,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task TestMultipleSyncronousCommandsShouldReturn()
         {
-            using RCON rconClient = serverFixture.GetRconClient();
+            using Rcon rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             for (int i = 0; i < 10; i++)
@@ -93,7 +83,7 @@ namespace CoreRCON.Tests
         {
             List<Task> tasks = [];
 
-            using RCON rconClient = serverFixture.GetRconClient();
+            using Rcon rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             tasks = Enumerable.Range(1, 10)
@@ -108,7 +98,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task InfoQueryShouldReturnValidPayload()
         {
-            SourceQueryInfo result = (SourceQueryInfo) await ServerQuery.Info(serverFixture._rconEndpoint, ServerQuery.ServerType.Source);
+            SourceQueryInfo result = (SourceQueryInfo)await ServerQuery.Info(serverFixture._rconEndpoint, ServerQuery.ServerType.Source);
             Assert.NotNull(result);
             Assert.NotNull(result.Name);
         }
