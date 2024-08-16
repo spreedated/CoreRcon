@@ -1,4 +1,6 @@
-﻿namespace CoreRCON
+﻿#pragma warning disable CA1069 // Enums values should not be duplicated
+
+namespace CoreRCON
 {
     // SERVERDATA_AUTH_RESPONSE and SERVERDATA_EXECCOMMAND are both 2
     public enum PacketType

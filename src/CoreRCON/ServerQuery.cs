@@ -34,15 +34,10 @@ namespace CoreRCON
             Stat = 0x00
         }
 
-        private static readonly UdpClient _client;
-        private static readonly byte[] _magic = [0xFE, 0xFD]; 
+        private static readonly UdpClient _client = new();
+        private static readonly byte[] _magic = [0xFE, 0xFD];
         private static readonly byte[] _asInfoPayload = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
         private static readonly byte[] _asInfochallengeResponse = [0xFF, 0xFF, 0xFF, 0xFF, 0x41];
-
-        static ServerQuery()
-        {
-            _client = new UdpClient();
-        }
 
         /// <inheritdoc cref="Info(IPEndPoint, ServerType, TimeSpan?)"/>
         /// <param name="address">IP of the server.</param>
@@ -66,7 +61,7 @@ namespace CoreRCON
                         await _client.SendAsync(_asInfoPayload, _asInfoPayload.Length, host);
                         UdpReceiveResult sourceResponse = await _client.ReceiveAsync();
                         // If Server responds with a Challenge number we need to resend the request with that number
-                        if (sourceResponse.Buffer.ToArray().Take(_asInfochallengeResponse.Length).SequenceEqual(_asInfochallengeResponse))
+                        if (sourceResponse.Buffer.Take(_asInfochallengeResponse.Length).SequenceEqual(_asInfochallengeResponse))
                         {
                             byte[] challenge = [.. _asInfoPayload, .. sourceResponse.Buffer.Skip(5).Take(4)];
                             await _client.SendAsync(challenge, challenge.Length, host);
@@ -136,7 +131,12 @@ namespace CoreRCON
                 default:
                     throw new ArgumentException("type argument was invalid");
             }
+        }
 
+        public static void Close()
+        {
+            _client?.Close();
+            _client?.Dispose();
         }
     }
 }

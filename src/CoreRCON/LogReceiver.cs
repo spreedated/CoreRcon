@@ -11,6 +11,8 @@ namespace CoreRCON
 {
     public class LogReceiver : IDisposable
     {
+        private bool disposedValue;
+
         public int ResolvedPort
         {
             get
@@ -24,9 +26,9 @@ namespace CoreRCON
             }
         }
 
-        private List<Action<LogAddressPacket>> _logListeners { get; } = new List<Action<LogAddressPacket>>();
-        private List<ParserContainer> _parseListeners { get; } = new List<ParserContainer>();
-        private List<Action<string>> _rawListeners { get; } = new List<Action<string>>();
+        private List<Action<LogAddressPacket>> _logListeners { get; } = [];
+        private List<ParserContainer> _parseListeners { get; } = [];
+        private List<Action<string>> _rawListeners { get; } = [];
         private UdpClient _udp { get; set; }
         private IPEndPoint[] _sources { get; set; }
 
@@ -40,11 +42,6 @@ namespace CoreRCON
             _sources = sources;
             _udp = new UdpClient(port);
             Task.Run(() => StartListener());
-        }
-
-        public void Dispose()
-        {
-            _udp.Dispose();
         }
 
         /// <summary>
@@ -123,6 +120,25 @@ namespace CoreRCON
                 LogAddressPacket packet = LogAddressPacket.FromBytes(result.Buffer);
                 LogAddressPacketReceived(packet);
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _udp?.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

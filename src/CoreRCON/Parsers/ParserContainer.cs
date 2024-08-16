@@ -17,8 +17,7 @@ namespace CoreRCON.Parsers
         /// <param name="line">Single line from the server.</param>
         internal void TryCallback(string line)
         {
-            object result;
-            if (TryParse(line, out result))
+            if (TryParse(line, out var result))
             {
                 Callback(result);
             }

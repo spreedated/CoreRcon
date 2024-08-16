@@ -11,7 +11,7 @@ namespace CoreRCON.Parsers
     {
         public abstract string Pattern { get; }
 
-        private Regex _regex_compiled => new Regex(Pattern, RegexOptions.Compiled | RegexOptions.Singleline);
+        private Regex _regex_compiled => new(Pattern, RegexOptions.Compiled | RegexOptions.Singleline);
 
         public virtual bool IsMatch(string input) => _regex_compiled.IsMatch(input);
 

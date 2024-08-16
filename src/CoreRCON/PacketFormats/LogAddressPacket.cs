@@ -13,7 +13,7 @@ namespace CoreRCON.PacketFormats
     // if 82, the rest of the packet is the body.
     // Not sure what happens if it's 83, since I can't get my test server to return one even with sv_logsecret set.
 
-    public struct LogAddressPacket
+    public readonly struct LogAddressPacket
     {
         /// <summary>
         /// The body of the packet with the timestamp removed.
@@ -47,7 +47,7 @@ namespace CoreRCON.PacketFormats
 
             // Get timestamp
             // https://developer.valvesoftware.com/wiki/HL_Log_Standard
-            var match = new Regex(@"L (\d{2}/\d{2}/\d{4} - \d{2}:\d{2}:\d{2}):").Match(rawBody);
+            var match = PreCompiledRegex.GetTimestamp().Match(rawBody);
             if (match.Success)
             {
                 var value = match.Groups[1].Value;
@@ -55,11 +55,11 @@ namespace CoreRCON.PacketFormats
             }
             else
             {
-                Timestamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                Timestamp = DateTime.UnixEpoch;
             }
 
             // Get body without the date/time
-            Body = rawBody.Substring(25);
+            Body = rawBody[25..];
         }
 
         public override string ToString() => RawBody;
@@ -88,7 +88,7 @@ namespace CoreRCON.PacketFormats
             {
                 // Force string to \r\n line endings
                 string body = new string(Encoding.UTF8.GetChars(buffer, 5, buffer.Length - 7));
-                body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
+                body = PreCompiledRegex.FindCarriageAndLineFeedReturns().Replace(body, "\r\n");
                 return new LogAddressPacket(hasPassword, body);
             }
             catch (Exception ex)

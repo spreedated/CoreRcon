@@ -25,7 +25,7 @@ namespace CoreRCON
     /// <param name="strictCommandPacketIdMatching">When true, will only match response packets if a matching command is found. Concurrent commands are disabled when set to false. Disable if server does not respect packet ids</param>
     /// <param name="autoConnect">When true, will attempt to auto connect to the server if the connection has been dropped</param>
     /// <param name="logger">Logger to use, null means none</param>
-    public partial class RCON(
+    public partial class Rcon(
         IPEndPoint endpoint,
         string password,
         uint timeout = 10000,
@@ -75,7 +75,7 @@ namespace CoreRCON
         /// <summary>
         /// Fired when an RCON package has been received
         /// </summary>
-        public event Action<RCONPacket> OnPacketReceived;
+        public event Action<RconPacket> OnPacketReceived;
 
         /// <summary>
         /// Create RCON object, Se main constructor for more info
@@ -86,7 +86,7 @@ namespace CoreRCON
         /// <param name="sourceMultiPacketSupport"></param>
         /// <param name="strictCommandPacketIdMatching"></param>
         /// <param name="autoConnect"></param>
-        public RCON(IPAddress host,
+        public Rcon(IPAddress host,
             ushort port,
             string password,
             uint timeout = 10000,
@@ -129,7 +129,7 @@ namespace CoreRCON
                 .ConfigureAwait(false);
             _connected = true;
             Pipe pipe = new Pipe();
-            _pipeCts = new CancellationTokenSource();
+            _pipeCts = new();
             _socketWriter = FillPipeAsync(pipe.Writer, _pipeCts.Token)
                 .ContinueWith(LogDisconnect);
             _socketReader = ReadPipeAsync(pipe.Reader, _pipeCts.Token)
@@ -154,7 +154,7 @@ namespace CoreRCON
                 {
                     // Allocate at least 14 bytes from the PipeWriter
                     Memory<byte> memory = writer.GetMemory(minimumBufferSize);
-                    int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None)
+                    int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None, cancellationToken)
                         .ConfigureAwait(false);
                     if (bytesRead == 0 || cancellationToken.IsCancellationRequested)
                     {
@@ -225,7 +225,7 @@ namespace CoreRCON
                         // Get packet end positions 
                         SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
                         byte[] byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
-                        RCONPacket packet = RCONPacket.FromBytes(byteArr);
+                        RconPacket packet = RconPacket.FromBytes(byteArr);
 
                         // Forward rcon packet to handler
                         RCONPacketReceived(packet);
@@ -279,75 +279,10 @@ namespace CoreRCON
                 if (_pipeCts != null)
                 {
                     _pipeCts.Cancel();
+                    _pipeCts.Dispose();
                     _pipeCts = null;
                 }
             }
-        }
-
-        /// <summary>
-        /// Send a command to the server, and wait for the response before proceeding.  Expect the result to be parsable into T.
-        /// </summary>
-        /// <typeparam name="T">Type to parse the command as.</typeparam>
-        /// <param name="command">Command to send to the server.</param>
-        /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
-        /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null)
-            where T : class, IParseable, new()
-        {
-
-            string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
-            // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
-            var source = new TaskCompletionSource<T>();
-            var instance = ParserHelpers.CreateParser<T>();
-            var container = new ParserContainer
-            {
-                IsMatch = instance.IsMatch,
-                Parse = instance.Parse,
-            };
-
-            if (!container.TryParse(response, out var parsed))
-            {
-                throw new FormatException("Failed to parse server response");
-            }
-            return (T)parsed;
-        }
-
-        public async Task<bool> AuthenticateAsync()
-        {
-            // ensure mutual execution of SendPacketAsync and RCONPacketReceived
-            await _semaphoreSlim.WaitAsync();
-
-            Task completedTask;
-            try
-            {
-                _authenticationTask = new TaskCompletionSource<bool>();
-                await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password))
-                    .ConfigureAwait(false);
-
-                completedTask = await Task.WhenAny(_authenticationTask.Task, _socketWriter, _socketReader)
-                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
-                    .ConfigureAwait(false);
-            }
-            catch (TimeoutException)
-            {
-                throw new TimeoutException("Timeout while waiting for authentication response from server");
-            }
-            finally
-            {
-                _semaphoreSlim.Release();
-            }
-
-            if (completedTask == _authenticationTask.Task)
-            {
-                var success = await _authenticationTask.Task;
-                if (!success)
-                {
-                    throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
-                }
-            }
-
-            await completedTask;
-            return true;
         }
 
         /// <summary>
@@ -391,7 +326,7 @@ namespace CoreRCON
                 throw new SocketException();
             }
 
-            RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
+            RconPacket packet = new RconPacket(packetId, PacketType.ExecCommand, command);
 
             Task completedTask;
             try
@@ -430,13 +365,79 @@ namespace CoreRCON
         }
 
         /// <summary>
+        /// Send a command to the server, and wait for the response before proceeding.  Expect the result to be parsable into T.
+        /// </summary>
+        /// <typeparam name="T">Type to parse the command as.</typeparam>
+        /// <param name="command">Command to send to the server.</param>
+        /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
+        /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
+        public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null)
+            where T : class, IParseable, new()
+        {
+
+            string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
+            // See comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
+            var source = new TaskCompletionSource<T>();
+            var instance = ParserHelpers.CreateParser<T>();
+            var container = new ParserContainer
+            {
+                IsMatch = instance.IsMatch,
+                Parse = instance.Parse,
+            };
+
+            if (!container.TryParse(response, out var parsed))
+            {
+                throw new FormatException("Failed to parse server response");
+            }
+            return (T)parsed;
+        }
+
+        public async Task<bool> AuthenticateAsync()
+        {
+            // ensure mutual execution of SendPacketAsync and RCONPacketReceived
+            await _semaphoreSlim.WaitAsync();
+
+            Task completedTask;
+            try
+            {
+                _authenticationTask = new TaskCompletionSource<bool>();
+                await SendPacketAsync(new RconPacket(0, PacketType.Auth, _password))
+                    .ConfigureAwait(false);
+
+                completedTask = await Task.WhenAny(_authenticationTask.Task, _socketWriter, _socketReader)
+                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new TimeoutException("Timeout while waiting for authentication response from server");
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
+
+            if (completedTask == _authenticationTask.Task)
+            {
+                var success = await _authenticationTask.Task;
+                if (!success)
+                {
+                    throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
+                }
+            }
+
+            await completedTask;
+            return true;
+        }
+
+        /// <summary>
         /// Merges RCON packet bodies and resolves the waiting task
         /// with the full body when full response has been recived. 
         /// </summary>
         /// <param name="packet"> Newly received packet </param>
-        private void RCONPacketReceived(RCONPacket packet)
+        private void RCONPacketReceived(RconPacket packet)
         {
-            _logger?.LogTrace("RCON packet received: {}", packet.Id);
+            _logger?.LogTrace("RCON packet received: {Id}", packet.Id);
 
             if (packet.Type == PacketType.AuthResponse)
             {
@@ -461,7 +462,7 @@ namespace CoreRCON
                 }
                 else
                 {
-                    _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
+                    _logger?.LogWarning("Received packet with no matching command id: {Id} body: {Body}", packet.Id, packet.Body);
                     return;
                 }
             }
@@ -498,9 +499,9 @@ namespace CoreRCON
         /// Send a packet to the server.
         /// </summary>
         /// <param name="packet">Packet to send, which will be serialized.</param>
-        private async Task SendPacketAsync(RCONPacket packet)
+        private async Task SendPacketAsync(RconPacket packet)
         {
-            _logger?.LogTrace("Send packet: {}", packet.Id);
+            _logger?.LogTrace("Send packet: {Id}", packet.Id);
             if (!_connected)
             {
                 throw new InvalidOperationException("Connection is closed.");
@@ -511,7 +512,7 @@ namespace CoreRCON
             if (packet.Type == PacketType.ExecCommand && _multiPacket)
             {
                 //Send a extra packet to find end of large packets
-                var emptyPackage = new RCONPacket(packet.Id, PacketType.Response, "");
+                var emptyPackage = new RconPacket(packet.Id, PacketType.Response, "");
                 await _tcp.SendAsync(new ArraySegment<byte>(emptyPackage.ToBytes()), SocketFlags.None)
                     .ConfigureAwait(false);
             }

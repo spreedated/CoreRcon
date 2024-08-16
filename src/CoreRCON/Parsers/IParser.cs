@@ -7,8 +7,7 @@ namespace CoreRCON.Parsers
 
     public interface IParser { }
 
-    public interface IParser<T> : IParser
-        where T : class
+    public interface IParser<out T> : IParser where T : class
     {
         /// <summary>
         /// Regex pattern used to match this item.

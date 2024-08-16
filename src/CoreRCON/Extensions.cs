@@ -10,11 +10,6 @@ namespace CoreRCON
 {
     internal static class Extensions
     {
-        // Trick VS into thinking this is a resolved task
-        internal static void Forget(this Task task)
-        {
-        }
-
         /// <summary>
         /// Step through a byte array and read a null-terminated string.
         /// </summary>
@@ -27,7 +22,7 @@ namespace CoreRCON
             int end = Array.IndexOf(bytes, (byte)0, start);
             if (end < 0)
             {
-                throw new ArgumentOutOfRangeException("Byte array does not appear to contain a null byte to stop reading a string at.");
+                throw new ArgumentOutOfRangeException(nameof(bytes), "Byte array does not appear to contain a null byte to stop reading a string at.");
             }
 
             i = end + 1;
@@ -90,9 +85,14 @@ namespace CoreRCON
         /// <returns>Truncated string with ellipses, or the original string.</returns>
         internal static string Truncate(this string str, int maxLength)
         {
-            return str?.Length <= maxLength
+            if (str == null)
+            {
+                return str;
+            }
+
+            return str.Length <= maxLength
                 ? str
-                : str.Substring(0, maxLength - 3) + "...";
+                : string.Concat(str.AsSpan(0, maxLength - 3), "...");
         }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace CoreRCON
                     throw new TimeoutException();
                 }
 
-                cts.Cancel();
+                await cts.CancelAsync();
 
                 return await task.ConfigureAwait(false);
             }
@@ -173,7 +173,7 @@ namespace CoreRCON
                 }
 
                 // Cancel the timer task so that it does not fire
-                cts.Cancel();
+                await cts.CancelAsync();
                 await task;
             }
         }

@@ -31,13 +31,13 @@ namespace CoreRCON.Parsers.Standard
 
         public bool IsMatch(string input)
         {
-            return input.Contains("hostname: ") | input.Contains("hibernating");
+            return input.Contains("hostname: ") || input.Contains("hibernating");
 
         }
 
         public Status Load(GroupCollection groups)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public Status Parse(string input)
@@ -46,34 +46,29 @@ namespace CoreRCON.Parsers.Standard
                 .Select(x => x.Split(':'))
                 .Where(x => x.Length > 1 && !string.IsNullOrEmpty(x[0].Trim())
                     && !string.IsNullOrEmpty(x[1].Trim()))
-                .ToDictionary(x => x[0].Trim(), x => string.Join(":", x.ToList().Skip(1)).Trim());
+                .ToDictionary(x => x[0].Trim(), x => string.Join(":", x.Skip(1)).Trim());
 
-            string hostname = null;
-            groups.TryGetValue("hostname", out hostname);
-            string version = null;
-            groups.TryGetValue("version", out version);
+            groups.TryGetValue("hostname", out string hostname);
+            groups.TryGetValue("version", out string version);
             string steamId = null;
             if (version != null)
             {
-                Match match = Regex.Match(version, ".*(\\[.*\\]).*");
+                Match match = PreCompiledRegex.FindBrackets().Match(version);
                 if (match.Success)
                 {
                     steamId = match.Groups[1].Value;
                 }
             }
-            string map = null;
-            groups.TryGetValue("map", out map);
-            string type = null;
-            groups.TryGetValue("type", out type);
+            groups.TryGetValue("map", out string map);
+            groups.TryGetValue("type", out string type);
 
             byte players = 0, bots = 0, maxPlayers = 0;
-            string playerString = null;
             bool hibernating = false;
-            groups.TryGetValue("players", out playerString);
+            groups.TryGetValue("players", out string playerString);
             if (playerString != null)
             {
-                Match oldMatch = Regex.Match(playerString, "(\\d+) \\((\\d+) max\\).*"); //Old pattern
-                Match newMatch = Regex.Match(playerString, "(\\d+) humans, (\\d+) bots\\((\\d+)/\\d+ max\\) (\\(not hibernating\\))?.*");
+                Match oldMatch = PreCompiledRegex.FindPlayersOldPattern().Match(playerString);
+                Match newMatch = PreCompiledRegex.FindPlayers().Match(playerString);
                 if (oldMatch.Success)
                 {
                     players = byte.Parse(oldMatch.Groups[1].Value);
@@ -96,12 +91,13 @@ namespace CoreRCON.Parsers.Standard
                 hibernating = input.Contains("hibernating") && !input.Contains("not hibernating");
             }
 
-            string localIp = null, publicIp = null, ipString = null;
-            groups.TryGetValue("udp / ip", out ipString);
+            string localIp = null;
+            string publicIp = null;
+            groups.TryGetValue("udp / ip", out string ipString);
             if (ipString != null)
             {
-                Match oldMatch = Regex.Match(ipString, "((\\d|\\.)+:(\\d|\\.)+)\\(public ip: (.*)\\).*"); //Old pattern
-                Match newMatch = Regex.Match(ipString, "\\((.*:.*)\\)\\s+\\(public ip: (.*)\\).*");
+                Match oldMatch = PreCompiledRegex.FindIpOldPattern().Match(ipString);
+                Match newMatch = PreCompiledRegex.FindIp().Match(ipString);
                 if (oldMatch.Success)
                 {
                     localIp = oldMatch.Groups[1].Value;
@@ -132,7 +128,7 @@ namespace CoreRCON.Parsers.Standard
 
         public Status Parse(Group group)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

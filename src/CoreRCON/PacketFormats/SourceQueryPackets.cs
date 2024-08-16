@@ -60,7 +60,7 @@
                 Type = (ServerType)buffer[i++],
                 Environment = (ServerEnvironment)buffer[i++],
                 Visibility = (ServerVisibility)buffer[i++],
-                VAC = (ServerVAC)buffer[i++]
+                VAC = (ServerVAC)buffer[i]
             };
         }
     }

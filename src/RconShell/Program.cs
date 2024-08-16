@@ -5,8 +5,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 /*
  * Simple Interactive RCON shell
@@ -15,35 +13,38 @@ using Microsoft.Extensions.Logging;
 
 namespace RconShell
 {
-    class Program
+    public static class Program
     {
-        static RCON rcon;
+        static Rcon rcon;
         const int ThreadCount = 10;
         const int MessageCount = 10;
         static int completed = 0;
 
         public static async void ConcurrentTestAsync()
         {
-            Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} started");
+            Console.WriteLine($"Thread {Environment.CurrentManagedThreadId} started");
             var context = SynchronizationContext.Current;
             if (context != null)
-                Console.WriteLine($"Context {context.ToString()}");
+            {
+                Console.WriteLine($"Context {context}");
+            }
+
             for (int i = 0; i < MessageCount; i++)
             {
                 string response = await rcon.SendCommandAsync($"say {i}");
                 if (response.EndsWith($"Console: {i}"))
                 {
-                    Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} failed on iteration {i} response = {response}");
+                    Console.WriteLine($"Thread {Environment.CurrentManagedThreadId} failed on iteration {i} response = {response}");
                 }
             }
             Interlocked.Increment(ref completed);
-            Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} finished");
+            Console.WriteLine($"Thread {Environment.CurrentManagedThreadId} finished");
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         static async Task Main(string[] args)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
-
-            bool autoConnect = true;
             string host;
             int port = 0;
             string password;
@@ -54,7 +55,7 @@ namespace RconShell
             host = string.IsNullOrWhiteSpace(input) ? "127.0.0.1" : input;
 
             // Split host and port
-            if (host.Contains(":"))
+            if (host.Contains(':'))
             {
                 var split = host.Split(':');
                 host = split[0];
@@ -74,12 +75,12 @@ namespace RconShell
             password = Console.ReadLine();
 
             var endpoint = new IPEndPoint(
-                addresses.First(),
+                addresses[0],
                 port
             );
             bool connected = false;
 
-            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: autoConnect);
+            rcon = new Rcon(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: true);
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
@@ -95,11 +96,14 @@ namespace RconShell
                     connected = true;
                     Console.WriteLine($"Connected ({endpoint})");
                     Console.WriteLine("You can now enter commands to send to server:");
-                    while (connected || autoConnect)
+                    while (connected)
                     {
                         string command = Console.ReadLine();
-                        if (!connected && !autoConnect)
+                        if (!connected)
+                        {
                             break;
+                        }
+
                         if (command == "conctest")
                         {
                             completed = 0;
@@ -158,10 +162,12 @@ namespace RconShell
                 {
                     Console.WriteLine("Attempt to reconnect? (y/n)");
                     var retry = Console.ReadLine();
-                    if (retry.ToLower() == "y")
+                    if (retry.Equals("y", StringComparison.CurrentCultureIgnoreCase))
+                    {
                         break;
+                    }
 
-                    if (retry.ToLower() == "n")
+                    if (retry.Equals("n", StringComparison.CurrentCultureIgnoreCase))
                     {
                         tryConnect = false;
                         break;

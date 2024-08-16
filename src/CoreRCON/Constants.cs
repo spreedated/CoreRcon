@@ -1,6 +1,6 @@
 ﻿namespace CoreRCON
 {
-    internal class Constants
+    internal static class Constants
     {
         /// <summary>
         /// The maximum size of an RCON packet.
