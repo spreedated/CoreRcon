@@ -1,14 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>A .NET Standard implementation of the Source RCON Protocol.</Description>
     <AssemblyTitle>CoreRCON</AssemblyTitle>
     <Authors>Alexander Westberg-Bladh Scott Kaye</Authors>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>
-    <PackageTags>valve;rcon;logaddress;cs2;minecraft;tf2;palworld</PackageTags>
+    <PackageTags>valve;rcon;logaddress;cs2;minecraft;tf2;palworld;factorio</PackageTags>
     <PackageIconUrl></PackageIconUrl>
     <PackageProjectUrl>https://github.com/Challengermode/CoreRcon</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
@@ -17,7 +17,7 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <AssemblyVersion>5.4.1</AssemblyVersion>
+    <AssemblyVersion>5.5.0</AssemblyVersion>
     <Version>$(AssemblyVersion)</Version>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <PackageReleaseNotes>https://github.com/Challengermode/CoreRcon/releases</PackageReleaseNotes>
@@ -26,6 +26,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>
+    <NoWarn>1701;1702;IDE0063</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
