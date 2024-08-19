@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreRCON", "CoreRCON\CoreRCON.csproj", "{CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "CoreRCON.Tests\CoreRCON.Tests.csproj", "{988E8596-4A7A-4641-8ED1-7F2E5BB523E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreRCON.Tests", "CoreRCON.Tests\CoreRCON.Tests.csproj", "{988E8596-4A7A-4641-8ED1-7F2E5BB523E8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RconShell", "RconShell\RconShell.csproj", "{D5734C9E-0823-40E2-B214-FC063ACB1A95}"
 EndProject
@@ -18,6 +18,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		logo.png = logo.png
 		mkdocs.yml = mkdocs.yml
 		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{92EFE74A-E51B-463F-8E3F-58DDF926E729}"
+	ProjectSection(SolutionItems) = preProject
+		docs\connecting.md = docs\connecting.md
+		docs\index.md = docs\index.md
+		docs\listening.md = docs\listening.md
 	EndProjectSection
 EndProject
 Global
@@ -41,11 +48,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5} = {600446C9-F807-4B19-807C-DDDE625CE558}
-		{988E8596-4A7A-4641-8ED1-7F2E5BB523E8} = {600446C9-F807-4B19-807C-DDDE625CE558}
-		{D5734C9E-0823-40E2-B214-FC063ACB1A95} = {600446C9-F807-4B19-807C-DDDE625CE558}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FD0B7DCD-27AE-4933-8A40-612FF87C36DB}
