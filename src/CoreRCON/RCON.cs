@@ -371,15 +371,11 @@ namespace CoreRCON
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null)
-            where T : class, IParseable, new()
+        public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null) where T : class, IParseable, new()
         {
-
             string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
-            // See comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
-            var source = new TaskCompletionSource<T>();
-            var instance = ParserHelpers.CreateParser<T>();
-            var container = new ParserContainer
+            IParser<T> instance = ParserHelpers.CreateParser<T>();
+            ParserContainer container = new()
             {
                 IsMatch = instance.IsMatch,
                 Parse = instance.Parse,
@@ -419,7 +415,7 @@ namespace CoreRCON
 
             if (completedTask == _authenticationTask.Task)
             {
-                var success = await _authenticationTask.Task;
+                bool success = await _authenticationTask.Task;
                 if (!success)
                 {
                     throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
