@@ -1,4 +1,7 @@
-﻿using CoreRCON.Parsers.Csgo;
+﻿using System;
+using System.Linq;
+using CoreRCON.Parsers.Csgo;
+using CoreRCON.Parsers.Factorio;
 using CoreRCON.Parsers.Standard;
 using Xunit;
 
@@ -157,7 +160,24 @@ namespace CoreRCON.Tests
             Assert.Equal(2, status.Humans);
             Assert.Equal(6, status.MaxPlayers);
             Assert.Equal(1, status.Bots);
+        }
 
+        [Fact]
+        public void testFacotrioPlayers()
+        {
+            string test = "Players (14):\n  SpReeD\n  KadsenPommes\n  kubium\n  martinum4 (online)\n  Meedox\n  Ricado13\n  OnRoad\n  xormos\n  Ryuzo\n  Templer_Tassada\n  marcsina\n  Burnusbut\n  Deehz\n  Marco3104";
+            PlayercollectionParser parser = new PlayercollectionParser();
+            Assert.True(parser.IsMatch(test));
+            Playercollection players = parser.Parse(test);
+            Assert.Equal(14, players.Count);
+            Assert.Equal(1, players.AsEnumerable().Count(x => x.Online));
+            Assert.Equal("Deehz", players[12].Name);
+            Assert.Equal("martinum4", players[3].Name);
+            Assert.Equal("SpReeD", players[0].Name);
+            Assert.False(players[7].Online);
+            Assert.True(players[3].Online);
+            Assert.True(players["martinum4"].Online);
+            Assert.False(players["marcsina"].Online);
         }
 
         [Fact]
