@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +27,7 @@ namespace RconShell
             {
                 Console.WriteLine($"Context {context}");
             }
-            
+
             for (int i = 0; i < MessageCount; i++)
             {
                 string response = await rcon.SendCommandAsync($"say {i}");

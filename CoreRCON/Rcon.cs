@@ -148,7 +148,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="writer"></param>
         /// <returns>Producer Task</returns>
-        async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
+        internal async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {
             const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
@@ -195,7 +195,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>Consumer Task</returns>
-        async Task ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
+        internal async Task ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {
             try
             {
@@ -260,26 +260,6 @@ namespace CoreRCON
         public void SetPassword(string password)
         {
             _password = password;
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _connected = false;
-                _semaphoreSlim?.Dispose();
-
-                _tcp?.Shutdown(SocketShutdown.Both);
-                _tcp?.Dispose();
-
-                _pipeCts?.Cancel();
-                _pipeCts?.Dispose();
-            }
         }
 
         /// <summary>
@@ -428,7 +408,7 @@ namespace CoreRCON
         /// with the full body when full response has been recived. 
         /// </summary>
         /// <param name="packet"> Newly received packet </param>
-        private void RCONPacketReceived(RconPacket packet)
+        internal void RCONPacketReceived(RconPacket packet)
         {
             _logger?.LogTrace("RCON packet received: {Id}", packet.Id);
 
@@ -492,7 +472,7 @@ namespace CoreRCON
         /// Send a packet to the server.
         /// </summary>
         /// <param name="packet">Packet to send, which will be serialized.</param>
-        private async Task SendPacketAsync(RconPacket packet)
+        internal async Task SendPacketAsync(RconPacket packet)
         {
             _logger?.LogTrace("Send packet: {Id}", packet.Id);
             if (!_connected)
@@ -522,6 +502,29 @@ namespace CoreRCON
                 }
             }
         }
+
+        #region Dispose
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _connected = false;
+                _semaphoreSlim?.Dispose();
+
+                _tcp?.Shutdown(SocketShutdown.Both);
+                _tcp?.Dispose();
+
+                _pipeCts?.Cancel();
+                _pipeCts?.Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
 
