@@ -25,23 +25,23 @@ namespace CoreRCON
     /// <param name="strictCommandPacketIdMatching">When true, will only match response packets if a matching command is found. Concurrent commands are disabled when set to false. Disable if server does not respect packet ids</param>
     /// <param name="autoConnect">When true, will attempt to auto connect to the server if the connection has been dropped</param>
     /// <param name="logger">Logger to use, null means none</param>
-    public partial class Rcon(IPEndPoint endpoint, string password, uint timeout = 10000, bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, bool autoConnect = true, ILogger logger = null) : IDisposable
+    public class Rcon : IDisposable
     {
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
         private bool _connected = false;
 
-        private readonly IPEndPoint _endpoint = endpoint;
+        private readonly IPEndPoint _endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
         private int _packetId = 0;
 
-        private string _password = password;
-        private readonly int _timeout = (int)timeout;
-        private readonly bool _autoConnect = autoConnect;
-        private readonly bool _strictCommandPacketIdMatching = strictCommandPacketIdMatching;
-        private readonly bool _multiPacket = sourceMultiPacketSupport;
+        private string _password;
+        private readonly int _timeout;
+        private readonly bool _autoConnect;
+        private readonly bool _strictCommandPacketIdMatching;
+        private readonly bool _multiPacket;
 
         private CancellationTokenSource _pipeCts;
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
@@ -50,7 +50,7 @@ namespace CoreRCON
 
         private Socket _tcp { get; set; }
 
-        private readonly ILogger _logger = logger;
+        private readonly ILogger _logger;
         readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private Task _socketWriter;
         private Task _socketReader;
@@ -73,6 +73,18 @@ namespace CoreRCON
         /// </summary>
         public event EventHandler<RconPacket> OnPacketReceived;
 
+        #region Constructor
+        public Rcon(IPEndPoint endpoint, string password, uint timeout = 10000, bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, bool autoConnect = true, ILogger logger = null)
+        {
+            this._endpoint = endpoint;
+            this._autoConnect = autoConnect;
+            this._timeout = (int)timeout;
+            this._password = password;
+            this._logger = logger;
+            this._strictCommandPacketIdMatching = strictCommandPacketIdMatching;
+            this._multiPacket = sourceMultiPacketSupport;
+        }
+
         /// <summary>
         /// Create RCON object, Se main constructor for more info
         /// </summary>
@@ -82,16 +94,10 @@ namespace CoreRCON
         /// <param name="sourceMultiPacketSupport"></param>
         /// <param name="strictCommandPacketIdMatching"></param>
         /// <param name="autoConnect"></param>
-        public Rcon(IPAddress host,
-            ushort port,
-            string password,
-            uint timeout = 10000,
-            bool sourceMultiPacketSupport = false,
-            bool strictCommandPacketIdMatching = true,
-            bool autoConnect = true,
-            ILogger logger = null)
-            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, strictCommandPacketIdMatching, autoConnect, logger)
-        { }
+        public Rcon(IPAddress host, ushort port, string password, uint timeout = 10000, bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, bool autoConnect = true, ILogger logger = null) : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, strictCommandPacketIdMatching, autoConnect, logger)
+        {
+        }
+        #endregion
 
         /// <summary>
         /// Connect to a server through RCON.  Automatically sends the authentication packet.
