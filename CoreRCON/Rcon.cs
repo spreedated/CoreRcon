@@ -25,20 +25,8 @@ namespace CoreRCON
     /// <param name="strictCommandPacketIdMatching">When true, will only match response packets if a matching command is found. Concurrent commands are disabled when set to false. Disable if server does not respect packet ids</param>
     /// <param name="autoConnect">When true, will attempt to auto connect to the server if the connection has been dropped</param>
     /// <param name="logger">Logger to use, null means none</param>
-    public partial class Rcon(
-        IPEndPoint endpoint,
-        string password,
-        uint timeout = 10000,
-        bool sourceMultiPacketSupport = false,
-        bool strictCommandPacketIdMatching = true,
-        bool autoConnect = true,
-        ILogger logger = null) : IDisposable
+    public partial class Rcon(IPEndPoint endpoint, string password, uint timeout = 10000, bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, bool autoConnect = true, ILogger logger = null) : IDisposable
     {
-
-        public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted
-                                                                     && _authenticationTask.Task.Result;
-        public bool Connected => _tcp?.Connected == true && _connected;
-
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
@@ -67,15 +55,23 @@ namespace CoreRCON
         private Task _socketWriter;
         private Task _socketReader;
 
+        public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted && _authenticationTask.Task.Result;
+        public bool Connected => _tcp?.Connected == true && _connected;
+
         /// <summary>
         /// Fired if connection is lost
         /// </summary>
-        public event Action OnDisconnected;
+        public event EventHandler OnDisconnected;
+
+        /// <summary>
+        /// Fired if connection established
+        /// </summary>
+        public event EventHandler OnConnected;
 
         /// <summary>
         /// Fired when an RCON package has been received
         /// </summary>
-        public event Action<RconPacket> OnPacketReceived;
+        public event EventHandler<RconPacket> OnPacketReceived;
 
         /// <summary>
         /// Create RCON object, Se main constructor for more info
@@ -137,6 +133,8 @@ namespace CoreRCON
 
             // Wait for successful authentication
             await AuthenticateAsync();
+
+            this.OnConnected?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -182,7 +180,7 @@ namespace CoreRCON
                 await writer.CompleteAsync()
                     .ConfigureAwait(false);
                 _connected = false;
-                OnDisconnected?.Invoke();
+                this.OnDisconnected?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -270,18 +268,11 @@ namespace CoreRCON
                 _connected = false;
                 _semaphoreSlim?.Dispose();
 
-                if (_tcp != null)
-                {
-                    _tcp.Shutdown(SocketShutdown.Both);
-                    _tcp.Dispose();
-                }
+                _tcp?.Shutdown(SocketShutdown.Both);
+                _tcp?.Dispose();
 
-                if (_pipeCts != null)
-                {
-                    _pipeCts.Cancel();
-                    _pipeCts.Dispose();
-                    _pipeCts = null;
-                }
+                _pipeCts?.Cancel();
+                _pipeCts?.Dispose();
             }
         }
 
@@ -488,7 +479,7 @@ namespace CoreRCON
                 _pendingCommands.TryRemove(packetId, out _);
             }
 
-            OnPacketReceived?.Invoke(packet);
+            this.OnPacketReceived?.Invoke(this, packet);
         }
 
         /// <summary>
